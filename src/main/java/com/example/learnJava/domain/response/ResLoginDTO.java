@@ -1,5 +1,8 @@
 package com.example.learnJava.domain.response;
 
+import com.example.learnJava.domain.Roles;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,9 +11,9 @@ import lombok.Setter;
 @Setter
 @Getter
 public class ResLoginDTO {
-    private String accessToken;
+    @JsonProperty("access_token")
+    private String access_token;
     private LoginUser user;
-    private RoleUser1 role;
 
     @Setter
     @Getter
@@ -20,14 +23,23 @@ public class ResLoginDTO {
         private Long id;
         private String name;
         private String email;
+        private Roles role;
     }
+
+    @Setter
+    @Getter
+    public static class UserGetAccount {
+        private LoginUser user;
+    }
+
 
     @Setter
     @Getter
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class RoleUser1 {
-        private Long id;
+    public static class UserInsideToken {
+        private long Id;
+        private String email;
         private String name;
     }
 

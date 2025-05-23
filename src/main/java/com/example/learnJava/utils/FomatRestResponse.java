@@ -23,6 +23,7 @@ public class FomatRestResponse implements ResponseBodyAdvice<Object> {
     public boolean supports(MethodParameter returnType, Class converterType) {
         return true;
     }
+
     @Override
     public Object beforeBodyWrite(
             Object body,
@@ -34,19 +35,29 @@ public class FomatRestResponse implements ResponseBodyAdvice<Object> {
 
         RestResponse<Object> restResponse = new RestResponse<>();
         ApiMessage message = returnType.getMethodAnnotation(ApiMessage.class);
-        if(body instanceof String){
-            if (body instanceof String  || body  instanceof Resource) {
+
+        if (body instanceof String) {
+            if (body instanceof String) {
                 restResponse.setStatus(HttpStatus.OK.value());
                 restResponse.setMessage(message != null ? message.value() : " Call API Success");
                 restResponse.setData(body);
                 restResponse.setError(null);
-                
+
                 try {
                     return objectMapper.writeValueAsString(restResponse); // Chuyển thành JSON String
                 } catch (Exception e) {
                     throw new RuntimeException("Error converting response to JSON", e);
                 }
             }
+        }
+
+        String path = request.getURI().getPath();
+        if (path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui")) {
+            return body;
+        }
+
+        if (body instanceof Resource) {
+            return body;
         }
         int status;
         if (response instanceof ServletServerHttpResponse servletResponse) {
@@ -58,7 +69,7 @@ public class FomatRestResponse implements ResponseBodyAdvice<Object> {
         restResponse.setStatus(status);
 
         if (status >= 400) {
-           return  body;
+            return body;
         } else {
             restResponse.setMessage(message != null ? message.value() : " Call API Success");
             restResponse.setData(body);

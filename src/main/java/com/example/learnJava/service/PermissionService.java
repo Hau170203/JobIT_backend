@@ -57,6 +57,14 @@ public class PermissionService {
         return page;
     }
 
+    public Permissions findById(Long id) throws IdInvalidException{
+        Optional<Permissions> per = this.permissionRepository.findById(id);
+        if(per.isEmpty()){
+            throw new IdInvalidException("Không tìm thấy permission này");
+        }
+        return per.get();
+    }
+
     public String deletePermission(Long id){
         Optional<Permissions> permissionOp = this.permissionRepository.findById(id);
         Permissions currentPermission = permissionOp.get();
@@ -65,4 +73,6 @@ public class PermissionService {
         this.permissionRepository.delete(currentPermission);
         return "Xóa thành công";
     }
+
+
 }

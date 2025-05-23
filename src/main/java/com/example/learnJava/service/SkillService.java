@@ -1,6 +1,8 @@
 package com.example.learnJava.service;
 
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -51,5 +53,19 @@ public class SkillService {
         }
         newSkill.setName(skillOp.getName());
         return this.skillRepository.save(newSkill);
+    }
+
+    public void deleteSkill(Long id) {
+        Optional<skill> skillOptional = this.skillRepository.findById(id);
+        skill currentSkill = skillOptional.get();
+
+        // xóa công việc (bên trong bảng job_skill)
+        currentSkill.getJobs().forEach(job -> job.getSkills().remove(currentSkill));
+
+
+        // xóa theo dõi (bên trong bảng subscriber_skill )
+
+        currentSkill.getSubscribers().forEach(sub -> sub.getSkills().remove(currentSkill));
+        this.skillRepository.delete(currentSkill);
     }
 }

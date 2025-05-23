@@ -17,13 +17,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 
 @Service
 public class UserService {
-
-    
     private final AuthController authController;
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
@@ -31,6 +30,7 @@ public class UserService {
 
     public UserService(UserRepository userRepository,
      AuthController authController,
+     
       CompanyRepository companyRepository, RoleReponsitory roleReponsitory){
         this.userRepository = userRepository;
         this.authController = authController;
@@ -43,10 +43,14 @@ public class UserService {
         if(user.getCompany() != null){
             Optional<Company> companyOp = this.companyRepository.findById(user.getCompany().getId());
             user.setCompany(companyOp.isPresent() ? companyOp.get() : null);
+        } else {
+            user.setCompany(null);
         }
-        if(user.getRole().getId() != null){
+        if(user.getRole() != null){
             Optional<Roles> roleOp = this.roleReponsitory.findById(user.getRole().getId());
             user.setRole(roleOp.isPresent() ? roleOp.get() : null);
+        } else {
+            user.setRole(null);
         }
 
         return  this.userRepository.save(user);
@@ -62,8 +66,8 @@ public class UserService {
         return user;
     }
 
-    public ResPageDTO handleGetAllUser(Pageable pageable){
-        Page<User> pageUser = this.userRepository.findAll(pageable);
+    public ResPageDTO handleGetAllUser(Specification<User> spec, Pageable pageable){
+        Page<User> pageUser = this.userRepository.findAll(spec, pageable);
         ResPageDTO page  = new ResPageDTO();
         ResPageDTO.meta meta = new ResPageDTO.meta();
         meta.setPage(pageUser.getNumber() + 1);
@@ -80,7 +84,7 @@ public class UserService {
             item.getAddress(),
             item.getGender(),
             item.getCreatedAt(),
-            item.getUpdateAt(),
+            item.getUpdatedAt(),
             new ResUserDTO.CompanyUser(
                 item.getCompany() != null ? item.getCompany().getId() : 0,
                 item.getCompany() != null ? item.getCompany().getName(): null

@@ -1,4 +1,5 @@
 package com.example.learnJava.utils.error;
+
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
@@ -17,33 +18,33 @@ import com.example.learnJava.domain.response.RestResponse;
 @RestControllerAdvice
 public class globalException {
     @ExceptionHandler(value = {
-                                UsernameNotFoundException.class,
-                                BadCredentialsException.class,
-                                IdInvalidException.class
-                            })
-    public ResponseEntity<RestResponse<Object>> HandleException(IdInvalidException ex){
+            UsernameNotFoundException.class,
+            BadCredentialsException.class,
+            IdInvalidException.class
+    })
+    public ResponseEntity<RestResponse<Object>> HandleException(IdInvalidException ex) {
         RestResponse<Object> res = new RestResponse<>();
         res.setStatus(HttpStatus.BAD_REQUEST.value());
         res.setMessage(ex.getMessage());
         res.setError("InvalidException");
 
-        return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 
     @ExceptionHandler(value = {
-                                NoResourceFoundException.class,
-                            })
-    public ResponseEntity<RestResponse<Object>> HandleException(Exception ex){
+            NoResourceFoundException.class,
+    })
+    public ResponseEntity<RestResponse<Object>> HandleException(Exception ex) {
         RestResponse<Object> res = new RestResponse<>();
         res.setStatus(HttpStatus.NOT_FOUND.value());
         res.setMessage(ex.getMessage());
         res.setError("NoteResouceFoundException");
 
-        return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<RestResponse<Object>> validationError(MethodArgumentNotValidException ex){
+    public ResponseEntity<RestResponse<Object>> validationError(MethodArgumentNotValidException ex) {
         BindingResult result = ex.getBindingResult();
         final List<FieldError> fieldError = result.getFieldErrors();
         RestResponse<Object> res = new RestResponse<>();
@@ -56,12 +57,22 @@ public class globalException {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 
-    @ExceptionHandler( UploadException.class)
-    public ResponseEntity<RestResponse<Object>> uploadError(UploadException ex){
+    @ExceptionHandler(UploadException.class)
+    public ResponseEntity<RestResponse<Object>> uploadError(UploadException ex) {
         RestResponse<Object> res = new RestResponse<>();
         res.setStatus(HttpStatus.BAD_REQUEST.value());
         res.setMessage(ex.getMessage());
         res.setError("UploadException");
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    @ExceptionHandler(PermissionInterceptorException.class)
+    public ResponseEntity<RestResponse<Object>> PermissionIntercepterError(PermissionInterceptorException ex){
+        RestResponse<Object> res = new RestResponse<>();
+        res.setStatus(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("PermissionInterceptor");
 
         return  ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }

@@ -21,22 +21,22 @@ public class RoleService {
     private final RoleReponsitory roleReponsitory;
     private final PermissionRepository permissionRepository;
 
-    public RoleService(RoleReponsitory roleReponsitory, PermissionRepository permissionRepository){
+    public RoleService(RoleReponsitory roleReponsitory, PermissionRepository permissionRepository) {
         this.roleReponsitory = roleReponsitory;
         this.permissionRepository = permissionRepository;
     }
 
-    public Roles createRole(Roles role) throws IdInvalidException{
+    public Roles createRole(Roles role) throws IdInvalidException {
         boolean ischeck = this.roleReponsitory.existsByName(role.getName());
 
-        if(ischeck){
+        if (ischeck) {
             throw new IdInvalidException("Role đã tồn tại");
         }
-        if(role.getPermissions() != null){
+        if (role.getPermissions() != null) {
             List<Long> listPerIds = role.getPermissions()
-            .stream().map(x -> x.getId())
-            .collect(Collectors.toList());
-            
+                    .stream().map(x -> x.getId())
+                    .collect(Collectors.toList());
+
             List<Permissions> listPer = this.permissionRepository.findByIdIn(listPerIds);
             role.setPermissions(listPer);
         }
@@ -46,31 +46,31 @@ public class RoleService {
 
     public Roles updateRole(Roles role) throws IdInvalidException {
         Roles checkRole = this.roleReponsitory.findById(role.getId()).orElse(null);
-        if(checkRole == null) {
+        if (checkRole == null) {
             throw new IdInvalidException("Không có role này!");
         }
         Boolean checkRoleId = this.roleReponsitory.existsByNameAndIdNot(role.getName(), role.getId());
-        if(checkRoleId) {
+        if (checkRoleId) {
             throw new IdInvalidException("Role này đã tồn tại");
         }
 
-        if(role.getActive() != null){
+        if (role.getActive() != null) {
             checkRole.setActive(role.getActive());
         }
 
-        if(role.getName() != null){
+        if (role.getName() != null) {
             checkRole.setName(role.getName());
         }
 
-        if(role.getDescription() != null){
+        if (role.getDescription() != null) {
             checkRole.setDescription(role.getDescription());
         }
 
-        if(role.getPermissions() != null){
+        if (role.getPermissions() != null) {
             List<Long> listPerIds = role.getPermissions()
-            .stream().map(x -> x.getId())
-            .collect(Collectors.toList());
-            
+                    .stream().map(x -> x.getId())
+                    .collect(Collectors.toList());
+
             List<Permissions> listPer = this.permissionRepository.findByIdIn(listPerIds);
             checkRole.setPermissions(listPer);
         }
@@ -78,11 +78,11 @@ public class RoleService {
         return this.roleReponsitory.save(checkRole);
     }
 
-    public ResPageDTO getAllRole(Specification<Roles> spec, Pageable pageable){
-        Page<Roles> listRoles = this.roleReponsitory.findAll(spec, pageable); 
+    public ResPageDTO getAllRole(Specification<Roles> spec, Pageable pageable) {
+        Page<Roles> listRoles = this.roleReponsitory.findAll(spec, pageable);
         ResPageDTO page = new ResPageDTO();
         ResPageDTO.meta meta = new ResPageDTO.meta();
-        meta.setPage(listRoles.getNumber()+ 1);
+        meta.setPage(listRoles.getNumber() + 1);
         meta.setPageSize(listRoles.getSize());
         meta.setPages(listRoles.getTotalPages());
         meta.setTotal(listRoles.getTotalElements());
@@ -93,12 +93,20 @@ public class RoleService {
 
     public String deleteRole(Long id) {
         Optional<Roles> roleOptional = this.roleReponsitory.findById(id);
-    
+
         if (roleOptional.isEmpty()) {
             return "Không tồn tại role này";
         }
         // Xoá role
         this.roleReponsitory.deleteById(id);
         return "Xoá role thành công!";
+    }
+
+    public Roles getRoleById(Long id) throws IdInvalidException {
+        Optional<Roles> role = this.roleReponsitory.findById(id);
+        if (role.isEmpty()) {
+            throw new IdInvalidException("Không tìm thấy quyền này");
+        }
+        return role.get();
     }
 }

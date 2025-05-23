@@ -37,13 +37,13 @@ public class CompanyController {
         this.companyService = companyService;
     }
     
-    @PostMapping("/company")
+    @PostMapping("/companies")
     public ResponseEntity<Company> CreateCompany(@Valid @RequestBody Company data) {
         Company newCompany = this.companyService.createCompany(data);
         return ResponseEntity.status(HttpStatus.CREATED).body(newCompany);
     }
 
-    @GetMapping("/company")
+    @GetMapping("/companies")
     @ApiMessage("get all company success")
     public ResponseEntity<ResPageDTO> GetCompany(
         @Filter Specification<Company> spec,
@@ -55,7 +55,7 @@ public class CompanyController {
         return  ResponseEntity.status(HttpStatus.OK).body(this.companyService.getAllCompany(spec, pageable));
     }
     
-    @GetMapping("/company/{id}")
+    @GetMapping("/companies/{id}")
     public ResponseEntity<Company> getMethodName(@PathVariable Long id) throws errorException {
         Company company = this.companyService.getDetailCompany(id);
         if(company == null){
@@ -64,7 +64,7 @@ public class CompanyController {
         return ResponseEntity.status(HttpStatus.OK).body(company);
     }
 
-    @DeleteMapping("/company/{id}")
+    @DeleteMapping("/companies/{id}")
     public ResponseEntity<String> deleteCompany(@PathVariable Long id) throws errorException {
         Company company = this.companyService.getDetailCompany(id);
         if(company == null){
@@ -74,7 +74,7 @@ public class CompanyController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Deleted successfully");
     }
 
-    @PutMapping("/company")
+    @PutMapping("/companies")
     public ResponseEntity<Company> updateCompany( @RequestBody Company entity) {
         Company company = this.companyService.updateCompany(entity);
         return ResponseEntity.status(HttpStatus.OK).body(company);

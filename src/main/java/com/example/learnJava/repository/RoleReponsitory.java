@@ -8,5 +8,6 @@ import com.example.learnJava.domain.Roles;
 public interface RoleReponsitory extends JpaRepository<Roles, Long>, JpaSpecificationExecutor<Roles> {
     boolean existsByName(String name);
     boolean existsByNameAndIdNot(String name, Long id);
+    Roles findByName(String name);
     
 } 

@@ -11,7 +11,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
 @Getter
 @Setter
 @AllArgsConstructor
@@ -21,6 +20,7 @@ public class ResJobDTO {
     private String name;
     private String location;
     private int quantity;
+    private int salary;
     private LevelEnum level;
     private String description;
     private Instant startDate;
@@ -31,9 +31,19 @@ public class ResJobDTO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+7")
     private Instant updatedAt;
     private String createdBy;
-    private String updateBy;  
+    private String updateBy;
 
-    private String company;
+    private companyUser company;
 
     private List<String> skills;
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class companyUser {
+        private Long id;
+        private String name;
+        private String logo;
+    }
 }

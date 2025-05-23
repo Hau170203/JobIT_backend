@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.crypto.SecretKey;
@@ -11,6 +12,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import com.example.learnJava.controllers.AuthController;
 import com.example.learnJava.domain.response.ResLoginDTO;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.util.Base64;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -34,13 +37,15 @@ public class SecurityUtils {
     private final AuthController authController;
 
     private final JwtEncoder jwtEncoder;
+    private final ObjectMapper objectMapper;
 
     // Định nghĩa thuật toán muốn dùng (HS256)
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS256;
 
-    public SecurityUtils(JwtEncoder jwtEncoder, AuthController authController) {
+    public SecurityUtils(JwtEncoder jwtEncoder, AuthController authController, ObjectMapper objectMapper) {
         this.jwtEncoder = jwtEncoder;
         this.authController = authController;
+        this.objectMapper =objectMapper;
     }
 
     // Lấy ra các dữ liệu từ application.propertiesproperties
@@ -52,17 +57,20 @@ public class SecurityUtils {
     private long accessRefreshExpiration;
 
     // Tạo JWT
-    public String createAccessToken(String email, ResLoginDTO.LoginUser login, ResLoginDTO.RoleUser1 role ) {
+    public String createAccessToken(String email, ResLoginDTO.LoginUser login ) {
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
-
+        // Map<String, Object> userMap = objectMapper.convertValue(login, new TypeReference<Map<String, Object>>() {});
+        ResLoginDTO.UserInsideToken userToken = new ResLoginDTO.UserInsideToken();
+        userToken.setId(login.getId());
+        userToken.setEmail(login.getEmail());
+        userToken.setName(login.getName());
         // Tạo body của JWT
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(email)
-                .claim("User", login)
-                .claim("role", role)
+                .claim("User", userToken)
                 .build();
 
         // Tạo header của JWT
@@ -70,16 +78,20 @@ public class SecurityUtils {
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsheader, claims)).getTokenValue();
     }
 
-    public String createRefreshToken(String email, Object user) {
+    public String createRefreshToken(String email, ResLoginDTO.LoginUser user) {
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessRefreshExpiration, ChronoUnit.SECONDS);
-
+        // Map<String, Object> userMap2 = objectMapper.convertValue(user, new TypeReference<Map<String, Object>>() {});
+        ResLoginDTO.UserInsideToken userToken = new ResLoginDTO.UserInsideToken();
+        userToken.setId(user.getId());
+        userToken.setEmail(user.getEmail());
+        userToken.setName(user.getName());
         // Tạo body của JWT
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(email)
-                .claim("User", user)
+                .claim("User", userToken)
                 .build();
 
         // Tạo header của JWT

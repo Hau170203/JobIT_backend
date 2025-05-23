@@ -16,7 +16,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ResUserDTO {
     private Long id;
-    private String name;
+    private String username;
     private String email;
     private int age;
     private String address;

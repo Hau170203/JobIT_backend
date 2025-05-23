@@ -20,8 +20,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 
-
-
 @RestController
 @RequestMapping("/api/v1")
 public class PermissionController {
@@ -39,7 +37,7 @@ public class PermissionController {
 
     @PutMapping("/permissions")
     public ResponseEntity<Permissions> putMethodName(@RequestBody Permissions per) throws IdInvalidException {
-       
+        
         return ResponseEntity.status(200).body(this.permissionService.updatePermission(per));
     }
 

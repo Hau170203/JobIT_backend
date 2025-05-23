@@ -39,8 +39,16 @@ public class JobService {
         res.setId(job.getId());
         res.setName(job.getName());
         res.setLocation(job.getLocation());
-        res.setCompany(job.getCompany().getName());
+
+        // Xử lý phần company
+
+        ResJobDTO.companyUser com = new ResJobDTO.companyUser();
+        com.setId(job.getCompany().getId());
+        com.setLogo(job.getCompany().getLogo());
+        com.setName(job.getCompany().getName());
+        res.setCompany(com);
         res.setQuantity(job.getQuantity());
+        res.setSalary(job.getSalary());
         res.setLevel(job.getLevel());
         res.setDescription(job.getDescription());
         res.setStartDate(job.getStartDate());
@@ -101,6 +109,7 @@ public class JobService {
                 x.getName(),
                 x.getLocation(),
                 x.getQuantity(),
+                x.getSalary(),
                 x.getLevel(),
                 x.getDescription(),
                 x.getStartDate(),
@@ -110,7 +119,10 @@ public class JobService {
                 x.getUpdatedAt(),
                 x.getCreatedBy(),
                 x.getUpdateBy(),
-                x.getCompany().getName(),
+                x.getCompany() != null ? new ResJobDTO.companyUser(
+                        x.getCompany().getId(),
+                        x.getCompany().getName(),
+                        x.getCompany().getLogo()) : null,
                 x.getSkills().stream().map(skill::getName).collect(Collectors.toList()))).collect(Collectors.toList());
         meta.setPage(listJobs.getNumber() + 1);
         meta.setPageSize(listJobs.getSize());
@@ -122,17 +134,17 @@ public class JobService {
         return page;
     }
 
-    
     public ResJobDTO updateJob(Job job) {
         Job checkJob = this.jobRepository.findById(job.getId()).orElse(null);
 
         if (checkJob == null) {
             return null;
         }
-       
+
         checkJob.setName(job.getName());
         checkJob.setLocation(job.getLocation());
         checkJob.setQuantity(job.getQuantity());
+        checkJob.setSalary(job.getSalary());
         checkJob.setLevel(job.getLevel());
         checkJob.setDescription(job.getDescription());
         checkJob.setStartDate(job.getStartDate());
@@ -157,14 +169,14 @@ public class JobService {
                 checkJob.setCompany(com);
             }
         }
-        // checkJob.setCompany(job.getCompany());   
+        // checkJob.setCompany(job.getCompany());
 
         Job newJob = this.jobRepository.save(checkJob);
         ResJobDTO JobDTO = this.JobDTO(newJob);
         return JobDTO;
     }
 
-    public void deleteJob(Long id){
+    public void deleteJob(Long id) {
         this.jobRepository.deleteById(id);
     }
 }

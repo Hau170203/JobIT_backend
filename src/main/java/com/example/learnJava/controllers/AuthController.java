@@ -5,21 +5,25 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.learnJava.domain.User;
 import com.example.learnJava.domain.request.ReqLoginDTO;
 import com.example.learnJava.domain.response.ResLoginDTO;
+import com.example.learnJava.domain.response.User.ResCreateUserDTO;
 import com.example.learnJava.service.UserService;
 import com.example.learnJava.utils.SecurityUtils;
 import com.example.learnJava.utils.annotation.ApiMessage;
 import com.example.learnJava.utils.error.IdInvalidException;
 
 import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,23 +37,26 @@ public class AuthController {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final SecurityUtils securityUtils;
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${hoidanit.jwt.refresh-token-validity-in-seconds}")
     private long accessRefreshExpiration;
 
     public AuthController(AuthenticationManagerBuilder authenticationManagerBuilder,
             @Lazy SecurityUtils securityUtils,
-            @Lazy UserService userService) {
+            @Lazy UserService userService,
+            @Lazy PasswordEncoder passwordEncoder) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.securityUtils = securityUtils;
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/auth/login")
     public ResponseEntity<Object> loginUser(@Valid @RequestBody ReqLoginDTO loginDTO) {
         // Nạp input username password vào security
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                loginDTO.getUserName(), loginDTO.getPassWord());
+                loginDTO.getUserName(), loginDTO.getPassword());
 
         // hàm xác thực người dùng => Viết hàm loadUserByUsername
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
@@ -60,24 +67,23 @@ public class AuthController {
         // Trả về thông tin user và token
         ResLoginDTO res = new ResLoginDTO();
 
-        ResLoginDTO.LoginUser userLogin = new ResLoginDTO.LoginUser(user.getId(), user.getUsername(), user.getEmail());
+        ResLoginDTO.LoginUser userLogin = new ResLoginDTO.LoginUser(user.getId(), user.getUsername(), user.getEmail(),
+                user.getRole());
         res.setUser(userLogin);
 
-        ResLoginDTO.RoleUser1 roleLogin1 = new ResLoginDTO.RoleUser1(user.getRole().getId(), user.getRole().getName());
-        res.setRole(roleLogin1);
         // Tạo access_token
-        String access_token = this.securityUtils.createAccessToken(user.getEmail(), res.getUser(), res.getRole() );
+        String access_token = this.securityUtils.createAccessToken(user.getEmail(), res.getUser());
 
-        res.setAccessToken(access_token);
+        res.setAccess_token(access_token);
 
         // tạo refresh token
-        String refresh_token = this.securityUtils.createRefreshToken(user.getEmail(), res);
+        String refresh_token = this.securityUtils.createRefreshToken(user.getEmail(), res.getUser());
 
         this.userService.handleRefreshToken(refresh_token, user.getEmail());
 
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", refresh_token)
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(accessRefreshExpiration)
                 .build();
@@ -98,6 +104,7 @@ public class AuthController {
             userLogin.setId(currentUserDB.getId());
             userLogin.setName(currentUserDB.getUsername());
             userLogin.setEmail(currentUserDB.getEmail());
+            userLogin.setRole(currentUserDB.getRole());
         }
         return ResponseEntity.ok().body(userLogin);
     }
@@ -118,18 +125,17 @@ public class AuthController {
         // Trả về thông tin user và token
         ResLoginDTO res = new ResLoginDTO();
 
-        ResLoginDTO.LoginUser userLogin = new ResLoginDTO.LoginUser(user.getId(), user.getUsername(), user.getEmail());
+        ResLoginDTO.LoginUser userLogin = new ResLoginDTO.LoginUser(user.getId(), user.getUsername(), user.getEmail(),
+                user.getRole());
         res.setUser(userLogin);
 
-        ResLoginDTO.RoleUser1 roleLogin1 = new ResLoginDTO.RoleUser1(user.getRole().getId(), user.getRole().getName());
-        res.setRole(roleLogin1);
         // Tạo access_token
-        String access_token = this.securityUtils.createAccessToken(email, res.getUser(), res.getRole());
+        String access_token = this.securityUtils.createAccessToken(email, res.getUser());
 
-        res.setAccessToken(access_token);
+        res.setAccess_token(access_token);
 
         // tạo refresh token
-        String refresh_token = this.securityUtils.createRefreshToken(email, userLogin);
+        String refresh_token = this.securityUtils.createRefreshToken(email, res.getUser());
 
         this.userService.handleRefreshToken(refresh_token, user.getEmail());
 
@@ -161,7 +167,21 @@ public class AuthController {
                 .path("/")
                 .maxAge(0)
                 .build();
-        return  ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, responseCookie.toString()).body(null);
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, responseCookie.toString()).body(null);
     }
 
+    @PostMapping("/auth/register")
+    public ResponseEntity<ResCreateUserDTO> createUser(@Valid @RequestBody User data) throws IdInvalidException {
+        Boolean check = this.userService.handleExistsByEmail(data.getEmail());
+        if (check) {
+            throw new IdInvalidException("Email " + data.getEmail() + " da ton tai");
+        }
+
+        String HashPassword = this.passwordEncoder.encode(data.getPassword());
+
+        data.setPassword(HashPassword);
+        User newUser = this.userService.handleCreateUser(data);
+        ResCreateUserDTO DTOUser = this.userService.handlCreateUserDTO(newUser);
+        return ResponseEntity.status(HttpStatus.CREATED).body(DTOUser);
+    }
 }

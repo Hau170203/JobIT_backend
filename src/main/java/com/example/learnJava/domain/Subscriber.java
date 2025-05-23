@@ -1,50 +1,51 @@
 package com.example.learnJava.domain;
 
 import java.time.Instant;
+import java.time.InstantSource;
 import java.util.List;
 
 import com.example.learnJava.utils.SecurityUtils;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "skill")
+@Table(name = "subscriber")
 @Getter
 @Setter
+public class Subscriber {
 
-public class skill {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
+
+    @NotBlank(message = "name không được để trống")
     private String name;
+    @NotBlank(message = "email không được để trống")
+    private String email;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+7")
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties(value = { "subscribers" })
+    @JoinTable(name = "subscriber_skill", joinColumns = @JoinColumn(name = "subscriber_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))
+    private List<skill> skills;
+
     private Instant createdAt;
-
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+7")
     private Instant updatedAt;
     private String createdBy;
-    private String updateBy;
-
-    @ManyToMany(mappedBy = "skills", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Job> jobs;
-
-    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "skills")
-    @JsonIgnore
-    private List<Subscriber> subscribers;
+    private String updatedBy;
 
     @PrePersist
     public void handleBeforeCreateBy() {
@@ -56,7 +57,7 @@ public class skill {
 
     @PreUpdate
     public void handleBeforeUpdateBy() {
-        this.updateBy = SecurityUtils.getCurrentUserLogin().isPresent() == true
+        this.updatedBy = SecurityUtils.getCurrentUserLogin().isPresent() == true
                 ? SecurityUtils.getCurrentUserLogin().get()
                 : "";
         this.updatedAt = Instant.now();

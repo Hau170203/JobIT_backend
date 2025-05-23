@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 
@@ -38,7 +40,6 @@ public class RolesController {
 
     @PutMapping("/roles")
     public ResponseEntity<Roles> updateRole(@RequestBody Roles role) throws IdInvalidException {
-
         return ResponseEntity.status(200).body(this.roleService.updateRole(role));
     }
 
@@ -49,6 +50,13 @@ public class RolesController {
     ) {
         return ResponseEntity.ok().body(this.roleService.getAllRole(spec, pageable));
     }
+
+    @GetMapping("/roles/{id}")
+    public ResponseEntity<Roles> getRoleById(@PathVariable Long id ) throws IdInvalidException {
+        Roles role = this.roleService.getRoleById(id);
+        return ResponseEntity.ok().body(role);
+    }
+    
     
     @DeleteMapping("/roles/{id}")
     public ResponseEntity<String> deleteRole(@PathVariable Long id){

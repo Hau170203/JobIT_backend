@@ -1,5 +1,6 @@
 package com.example.learnJava.service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +13,11 @@ import com.example.learnJava.domain.Resume;
 import com.example.learnJava.domain.User;
 import com.example.learnJava.domain.response.ResJobDTO;
 import com.example.learnJava.domain.response.ResPageDTO;
+import com.example.learnJava.domain.response.Resume.ResResumeByUserDTO;
 import com.example.learnJava.domain.response.Resume.ResResumeDTO;
 import com.example.learnJava.domain.response.Resume.ResResumeUpdateDTO;
 import com.example.learnJava.repository.ResumeRepository;
+import com.example.learnJava.repository.UserRepository;
 import com.example.learnJava.utils.SecurityUtils;
 import com.example.learnJava.utils.constant.ResumeStatusEnum;
 import com.example.learnJava.utils.error.IdInvalidException;
@@ -29,6 +32,7 @@ public class ResumeService {
     private final ResumeRepository resumeRepository;
     private final JobService jobService;
     private final UserService userService;
+    private final UserRepository userRepository;
 
     @Autowired
     FilterBuilder fb;
@@ -39,10 +43,11 @@ public class ResumeService {
     @Autowired
     FilterSpecificationConverter filterSpecificationConverter;
 
-    public ResumeService(ResumeRepository resumeRepository, JobService jobService, UserService userService) {
+    public ResumeService(ResumeRepository resumeRepository, JobService jobService, UserService userService, UserRepository userRepository) {
         this.resumeRepository = resumeRepository;
         this.jobService = jobService;
         this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     // Resume DTO
@@ -66,6 +71,37 @@ public class ResumeService {
         dto.setJob(jobDTO);
         return dto;
     }
+
+    public ResResumeByUserDTO convertToDTO2(Resume resume) {
+        ResResumeByUserDTO dto = new ResResumeByUserDTO();
+        dto.setId(resume.getId());
+        dto.setEmail(resume.getEmail());
+        dto.setUrl(resume.getUrl());
+        dto.setStatus(resume.getStatus());
+        dto.setCreatedAt(resume.getCreatedAt());
+        dto.setUpdatedAt(resume.getUpdatedAt());
+        dto.setCreatedBy(resume.getCreatedBy());
+        dto.setUpdatedBy(resume.getUpdatedBy());
+
+        ResResumeByUserDTO.User userDTO = new ResResumeByUserDTO.User();
+        userDTO.setId(resume.getUser().getId());
+        userDTO.setName(resume.getUser().getUsername());
+        dto.setUser(userDTO);
+
+        ResResumeByUserDTO.Job jobDTO = new ResResumeByUserDTO.Job();
+        jobDTO.setId(resume.getJob().getId());
+        jobDTO.setName(resume.getJob().getName());
+        dto.setJob(jobDTO);
+
+        ResResumeByUserDTO.CompanyUser com = new ResResumeByUserDTO.CompanyUser();
+        com.setId(resume.getJob().getCompany().getId());
+        com.setName(resume.getJob().getCompany().getName());
+        dto.setCompany(com);
+
+        return dto;
+    }
+
+    
 
     public ResResumeDTO createResume(Resume resume) throws IdInvalidException{
         ResJobDTO job = jobService.getDetailJob(resume.getJob().getId());
@@ -113,7 +149,7 @@ public class ResumeService {
         resumeRepository.delete(resume);
     }
 
-    public ResPageDTO getAllResumes(Specification<Resume> spec, Pageable pageable) {
+    public ResPageDTO getAllResumes( Specification<Resume> spec, Pageable pageable) {
         Page<Resume> resumes = this.resumeRepository.findAll(spec, pageable);
         ResPageDTO page = new ResPageDTO();
         ResPageDTO.meta meta = new ResPageDTO.meta();
@@ -122,14 +158,14 @@ public class ResumeService {
         meta.setPages(resumes.getTotalPages());
         meta.setTotal(resumes.getTotalElements());
         page.setMeta(meta);
-        page.setData(resumes.getContent().stream().map(this::convertToDTO).collect(Collectors.toList())
+        page.setData(resumes.getContent().stream().map(this::convertToDTO2).collect(Collectors.toList())
 );
         return page;
     }
 
     public ResPageDTO fetchResumeByUser(Pageable pageable){
         String email = SecurityUtils.getCurrentUserLogin().isPresent() == true ? SecurityUtils.getCurrentUserLogin().get() : "";
-        FilterNode node = filterParser.parse("email= '" + email + "'' ");
+        FilterNode node = filterParser.parse("email = '" + email + "'");
         FilterSpecification<Resume> spec = filterSpecificationConverter.convert(node);
         Page<Resume> pageResume = this.resumeRepository.findAll(spec, pageable);
         ResPageDTO  page = new ResPageDTO();
@@ -139,7 +175,13 @@ public class ResumeService {
         meta.setPageSize(pageResume.getSize());
         meta.setTotal(pageResume.getTotalElements());
         page.setMeta(meta);
-        page.setData(pageResume.getContent());
+        page.setData(pageResume.getContent().stream().map(this::convertToDTO2).collect(Collectors.toList()));
+        // page.setData(pageResume.getContent());
         return page;
+    }
+
+    public Resume fetchResumeById(Long id){
+        Resume resume = this.resumeRepository.findById(id).orElse(null);
+        return resume;
     }
 }

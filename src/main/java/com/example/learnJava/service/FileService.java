@@ -28,69 +28,78 @@ public class FileService {
         Path path = Paths.get(uri);
         File tmpDIr = new File(path.toString());
         if (!tmpDIr.isDirectory()) {
-           try {
-            Files.createDirectory(tmpDIr.toPath());
-            System.out.println("Directory created: " + tmpDIr.toPath());
-           } catch (IOException e) {
-            // TODO: handle exception
-            e.printStackTrace();
-           }
+            try {
+                Files.createDirectory(tmpDIr.toPath());
+                System.out.println("Directory created: " + tmpDIr.toPath());
+            } catch (IOException e) {
+                // TODO: handle exception
+                e.printStackTrace();
+            }
         } else {
             System.out.println("Directory already exists: " + tmpDIr.getAbsolutePath());
         }
     }
 
     public String store(MultipartFile file, String folder) throws URISyntaxException, IOException {
-       
+
         String fileName = file.getOriginalFilename();
         String safeFileName = fileName.replaceAll(" ", "_"); // hoặc dùng URLEncoder
-        
+
         // Tiếp tục lưu file như bình thường
         // Tạo tên file mới với định dạng thời gian hiện tại + tên file gốc
         // Ví dụ: 1678901234567_filename.jpg
-        String finalName =System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        String finalName = System.currentTimeMillis() + "_" + safeFileName;
 
         // Tạo đường dẫn đầy đủ đến thư mục và tên file
         // Ví dụ: /path/to/storage/folder/1678901234567_filename.jpg
-        URI uri = new URI(baseURI + folder+ "/" +safeFileName);
+        URI uri = new URI(baseURI + folder + "/" + finalName);
 
         // Tạo đường dẫn đến thư mục
         // Ví dụ: /path/to/storage/folder
         Path path = Paths.get(uri);
-        
+
         // lưu file vào thư mục
-        try (InputStream inputStream = file.getInputStream()){
+        try (InputStream inputStream = file.getInputStream()) {
             Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING);
         }
         return finalName;
     }
 
-    // public void downloadFile(String fileName, String folder) throws URISyntaxException, IOException {
-    //     // Tạo đường dẫn đầy đủ đến thư mục và tên file
-    //     // Ví dụ: /path/to/storage/folder/1678901234567_filename.jpg
-    //     URI uri = new URI(baseURI + folder+ "/" +fileName);
+    // public void downloadFile(String fileName, String folder) throws
+    // URISyntaxException, IOException {
+    // // Tạo đường dẫn đầy đủ đến thư mục và tên file
+    // // Ví dụ: /path/to/storage/folder/1678901234567_filename.jpg
+    // URI uri = new URI(baseURI + folder+ "/" +fileName);
 
-    //     // Tạo đường dẫn đến thư mục
-    //     // Ví dụ: /path/to/storage/folder
-    //     Path path = Paths.get(uri);
-        
-    //     // lưu file vào thư mục
-    //     try (InputStream inputStream = Files.newInputStream(path, StandardOpenOption.READ)){
-    //         Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING);
-    //     }
+    // // Tạo đường dẫn đến thư mục
+    // // Ví dụ: /path/to/storage/folder
+    // Path path = Paths.get(uri);
+
+    // // lưu file vào thư mục
+    // try (InputStream inputStream = Files.newInputStream(path,
+    // StandardOpenOption.READ)){
+    // Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING);
+    // }
     // }
 
     public long getFileLength(String fileName, String folder) throws URISyntaxException {
-        URI uri = new URI(baseURI + folder+ "/" +fileName);
+        URI uri = new URI(baseURI + folder + "/" + fileName);
         Path path = Paths.get(uri);
         File file = new File(path.toString());
-        if (!file.exists() || !file.isDirectory()) {
+
+        System.out.println("URI: " + uri);
+        System.out.println("Absolute path: " + file.getAbsolutePath());
+
+        // Kiểm tra: file phải tồn tại và KHÔNG phải là thư mục
+        if (!file.exists() || file.isDirectory()) {
             return 0;
         }
+    
         return file.length();
     }
 
-    public InputStreamResource getResource(String fileName, String folder) throws URISyntaxException, FileNotFoundException {
+    public InputStreamResource getResource(String fileName, String folder)
+            throws URISyntaxException, FileNotFoundException {
         URI uri = new URI(baseURI + folder + "/" + fileName);
         Path path = Paths.get(uri);
         File file = new File(path.toString());

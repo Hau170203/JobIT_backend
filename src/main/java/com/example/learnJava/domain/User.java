@@ -26,6 +26,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     @JsonProperty("username")
+    @Column(name = "name")
     private String username;
     @JsonProperty("email")
     @NotBlank(message = "Vui lòng nhập Email")
@@ -45,7 +46,8 @@ public class User {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+7")
     private Instant createdAt;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+7")
-    private Instant updateAt;
+    @Column(name = "updated_at") 
+    private Instant updatedAt;
     private String createdBy;
     private String updatedBy;
 
